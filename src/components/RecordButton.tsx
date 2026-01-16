@@ -116,8 +116,10 @@ const styles = StyleSheet.create({
     },
     pulseCircle: {
         position: 'absolute',
-        width: 120,
-        height: 120,
+        top: -10,
+        left: -10,
+        width: 100,
+        height: 100,
         borderRadius: 60,
         backgroundColor: colors.recording,
         zIndex: 1,

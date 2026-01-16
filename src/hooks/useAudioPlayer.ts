@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Audio, AVPlaybackStatus } from 'expo-av';
-import { Alert } from 'react-native';
 
 interface PlaybackState {
     isPlaying: boolean;
@@ -16,6 +15,7 @@ interface UseAudioPlayerOptions {
     backgroundVolume: number;
     loop: boolean;
     onPlaybackComplete?: () => void;
+    onError?: (title: string, message: string) => void;
 }
 
 export function useAudioPlayer(options: UseAudioPlayerOptions) {
@@ -26,6 +26,7 @@ export function useAudioPlayer(options: UseAudioPlayerOptions) {
         backgroundVolume,
         loop,
         onPlaybackComplete,
+        onError,
     } = options;
 
     const [playbackState, setPlaybackState] = useState<PlaybackState>({
@@ -111,10 +112,9 @@ export function useAudioPlayer(options: UseAudioPlayerOptions) {
     };
 
     const handleAudioFocusError = () => {
-        Alert.alert(
+        onError?.(
             'Audio Playback Issue',
-            'Could not acquire audio focus. Please try:\n\n• Closing other audio apps\n• Restarting Expo Go',
-            [{ text: 'OK' }]
+            'Could not acquire audio focus. Please try closing other audio apps or restarting Expo Go.'
         );
         setPlaybackState(prev => ({
             ...prev,

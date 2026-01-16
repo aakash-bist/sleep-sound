@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
-    Alert,
     Dimensions,
+    Animated,
+    Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +17,7 @@ import { useAudioRecorder } from '../src/hooks/useAudioRecorder';
 import { useAppStore } from '../src/store/useAppStore';
 import { RecordButton } from '../src/components/RecordButton';
 import { colors, spacing } from '../src/constants/theme';
+import { useToast } from '../src/components/Toast';
 
 const { width } = Dimensions.get('window');
 
@@ -36,6 +38,47 @@ export default function RecordScreen() {
     } = useAudioRecorder();
 
     const [recordingUri, setRecordingUri] = useState<string | null>(null);
+    const { showError } = useToast();
+
+    // Animation values for completed state
+    const completedOpacity = useRef(new Animated.Value(0)).current;
+    const completedScale = useRef(new Animated.Value(0.8)).current;
+    const checkScale = useRef(new Animated.Value(0)).current;
+
+    // Trigger animation when recording is saved
+    useEffect(() => {
+        if (recordingUri) {
+            // Reset values
+            completedOpacity.setValue(0);
+            completedScale.setValue(0.8);
+            checkScale.setValue(0);
+
+            // Animate in
+            Animated.parallel([
+                Animated.timing(completedOpacity, {
+                    toValue: 1,
+                    duration: 400,
+                    useNativeDriver: true,
+                    easing: Easing.out(Easing.ease),
+                }),
+                Animated.spring(completedScale, {
+                    toValue: 1,
+                    tension: 100,
+                    friction: 8,
+                    useNativeDriver: true,
+                }),
+                Animated.sequence([
+                    Animated.delay(200),
+                    Animated.spring(checkScale, {
+                        toValue: 1,
+                        tension: 150,
+                        friction: 6,
+                        useNativeDriver: true,
+                    }),
+                ]),
+            ]).start();
+        }
+    }, [recordingUri]);
 
     const handleRecordPress = async () => {
         try {
@@ -52,7 +95,7 @@ export default function RecordScreen() {
                 await startRecording();
             }
         } catch (error) {
-            Alert.alert('Microphone Error', 'We couldn\'t start the recording. Please check your permissions.');
+            showError('Microphone Error', 'We couldn\'t start the recording. Please check your permissions.');
         }
     };
 
@@ -126,14 +169,36 @@ export default function RecordScreen() {
                                 durationMs={status.durationMs}
                             />
                         ) : (
-                            <View style={styles.completedBox}>
-                                <View style={styles.checkCircle}>
-                                    <Ionicons name="checkmark" size={60} color="#fff" />
-                                </View>
+                            <Animated.View
+                                style={[
+                                    styles.completedBox,
+                                    {
+                                        opacity: completedOpacity,
+                                        transform: [{ scale: completedScale }],
+                                    }
+                                ]}
+                            >
+                                {/* Recording Visual with Sound Waves */}
+                                <Animated.View
+                                    style={[
+                                        styles.recordingVisual,
+                                        { transform: [{ scale: checkScale }] }
+                                    ]}
+                                >
+                                    <View style={styles.waveContainer}>
+                                        <View style={[styles.waveBar, styles.waveBar1]} />
+                                        <View style={[styles.waveBar, styles.waveBar2]} />
+                                        <View style={[styles.waveBar, styles.waveBar3]} />
+                                        <View style={[styles.waveBar, styles.waveBar4]} />
+                                        <View style={[styles.waveBar, styles.waveBar3]} />
+                                        <View style={[styles.waveBar, styles.waveBar2]} />
+                                        <View style={[styles.waveBar, styles.waveBar1]} />
+                                    </View>
+                                </Animated.View>
                                 <View style={styles.timeBadge}>
                                     <Text style={styles.timeText}>{formatDuration(status.durationMs)}</Text>
                                 </View>
-                            </View>
+                            </Animated.View>
                         )}
                     </View>
 
@@ -237,6 +302,51 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 10,
         marginBottom: spacing.xl,
+    },
+    recordingVisual: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.xl,
+    },
+    waveContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    waveBar: {
+        width: 4,
+        backgroundColor: colors.accent,
+        borderRadius: 2,
+    },
+    waveBar1: {
+        height: 24,
+        opacity: 0.5,
+    },
+    waveBar2: {
+        height: 40,
+        opacity: 0.7,
+    },
+    waveBar3: {
+        height: 56,
+        opacity: 0.85,
+    },
+    waveBar4: {
+        height: 72,
+        opacity: 1,
+    },
+    micCircle: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: colors.accent,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginHorizontal: 12,
+        shadowColor: colors.accent,
+        shadowOpacity: 0.4,
+        shadowRadius: 15,
+        elevation: 8,
     },
     timeBadge: {
         backgroundColor: 'rgba(255,255,255,0.06)',

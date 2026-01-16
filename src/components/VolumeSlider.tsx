@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, PanResponder } from 'react-native';
 import { colors, fontSize, spacing } from '../constants/theme';
 
 interface VolumeSliderProps {
@@ -12,17 +12,63 @@ interface VolumeSliderProps {
 const THUMB_SIZE = 24;
 
 export function VolumeSlider({ label, value, onValueChange, icon }: VolumeSliderProps) {
-    const [sliderWidth, setSliderWidth] = useState(0);
     const containerRef = useRef<View>(null);
+    const sliderLayoutRef = useRef({ x: 0, width: 0 });
+    const [sliderWidth, setSliderWidth] = useState(0);
 
-    const handleTouch = (evt: any) => {
-        if (sliderWidth <= 0) return;
+    // Use refs to avoid stale closures in PanResponder
+    const onValueChangeRef = useRef(onValueChange);
 
-        // Use locationX which is relative to the target element (the sliderArea)
-        const x = evt.nativeEvent.locationX;
-        const newValue = Math.max(0, Math.min(1, x / sliderWidth));
-        onValueChange(newValue);
-    };
+    useEffect(() => {
+        onValueChangeRef.current = onValueChange;
+    }, [onValueChange]);
+
+    const measureSlider = useCallback(() => {
+        containerRef.current?.measure((x, y, width, height, pageX, pageY) => {
+            sliderLayoutRef.current = { x: pageX, width };
+        });
+    }, []);
+
+    const calculateValueFromPageX = useCallback((pageX: number): number => {
+        const { x, width } = sliderLayoutRef.current;
+        if (width <= 0) return 0;
+
+        const relativeX = pageX - x;
+        const clampedX = Math.max(0, Math.min(width, relativeX));
+        return clampedX / width;
+    }, []);
+
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: () => true,
+            onPanResponderGrant: (evt) => {
+                // Measure the slider position at the start of each gesture
+                containerRef.current?.measure((x, y, width, height, pageX, pageY) => {
+                    sliderLayoutRef.current = { x: pageX, width };
+                    const newValue = calculateValueFromPageX(evt.nativeEvent.pageX);
+                    onValueChangeRef.current(newValue);
+                });
+            },
+            onPanResponderMove: (evt) => {
+                const newValue = calculateValueFromPageX(evt.nativeEvent.pageX);
+                onValueChangeRef.current(newValue);
+            },
+            onPanResponderTerminationRequest: () => false,
+        })
+    ).current;
+
+    const handleLayout = useCallback((e: any) => {
+        const width = e.nativeEvent.layout.width;
+        setSliderWidth(width);
+        sliderLayoutRef.current.width = width;
+        // Delay measure to ensure layout is complete
+        setTimeout(measureSlider, 50);
+    }, [measureSlider]);
+
+    // Calculate positions directly from value prop
+    const thumbLeft = sliderWidth > 0 ? value * (sliderWidth - THUMB_SIZE) : 0;
+    const fillPercent = value * 100;
 
     return (
         <View style={styles.container}>
@@ -35,27 +81,23 @@ export function VolumeSlider({ label, value, onValueChange, icon }: VolumeSlider
             </View>
 
             <View
+                ref={containerRef}
                 style={styles.sliderArea}
-                onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
-                onStartShouldSetResponder={() => true}
-                onMoveShouldSetResponder={() => true}
-                onResponderGrant={handleTouch}
-                onResponderMove={handleTouch}
-                onResponderTerminationRequest={() => false}
+                onLayout={handleLayout}
+                {...panResponder.panHandlers}
             >
                 {/* Track Background */}
                 <View style={styles.track} pointerEvents="none">
-                    <View style={[styles.fill, { width: `${value * 100}%` }]} />
+                    <View style={[styles.fill, { width: `${fillPercent}%` }]} />
                 </View>
 
                 {/* Thumb Visual */}
-                <View
-                    pointerEvents="none"
-                    style={[
-                        styles.thumb,
-                        { left: value * (sliderWidth - THUMB_SIZE) },
-                    ]}
-                />
+                {sliderWidth > 0 && (
+                    <View
+                        pointerEvents="none"
+                        style={[styles.thumb, { left: thumbLeft }]}
+                    />
+                )}
             </View>
         </View>
     );
@@ -123,5 +165,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
+        top: (48 - THUMB_SIZE) / 2,
     },
 });

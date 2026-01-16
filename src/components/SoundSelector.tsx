@@ -184,8 +184,8 @@ const styles = StyleSheet.create({
     },
     playingIndicator: {
         position: 'absolute',
-        top: -8,
-        right: -8,
+        top: 6,
+        right: 6,
         backgroundColor: colors.accent,
         borderRadius: 12,
         width: 24,

@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, Animated, Image } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as ExpoLinearGradient from 'expo-linear-gradient';
 const LinearGradient = (ExpoLinearGradient as any).LinearGradient || (ExpoLinearGradient as any).default || ExpoLinearGradient;
+import { ToastProvider } from '../src/components/Toast';
 import { colors, fontSize, spacing } from '../src/constants/theme';
 
 // Prevent auto-hide of splash
@@ -38,7 +40,7 @@ export default function RootLayout() {
                 <LinearGradient colors={['#02040a', '#050a1b', '#02040a']} style={StyleSheet.absoluteFill} />
                 <View style={styles.splashContent}>
                     <Image
-                        source={require('../assets/icon.png')}
+                        source={require('../assets/logo.png')}
                         style={styles.logoImage}
                         resizeMode="contain"
                     />
@@ -47,7 +49,7 @@ export default function RootLayout() {
                 </View>
                 <View style={styles.splashFooter}>
                     <Text style={styles.splashCredits}>
-                        CRAFTED with ❤️ BY AAKASH BIST
+                        CRAFTED WITH ❤️ BY AAKASH BIST
                     </Text>
                 </View>
             </Animated.View>
@@ -55,23 +57,27 @@ export default function RootLayout() {
     }
 
     return (
-        <View style={styles.container}>
-            <StatusBar style="light" />
-            <Stack
-                screenOptions={{
-                    headerShown: false,
-                    contentStyle: {
-                        backgroundColor: '#02040a',
-                    },
-                    animation: 'fade',
-                }}
-            >
-                <Stack.Screen name="index" />
-                <Stack.Screen name="record" />
-                <Stack.Screen name="mixer" />
-                <Stack.Screen name="player" />
-            </Stack>
-        </View>
+        <SafeAreaProvider>
+            <ToastProvider>
+                <View style={styles.container}>
+                    <StatusBar style="light" />
+                    <Stack
+                        screenOptions={{
+                            headerShown: false,
+                            contentStyle: {
+                                backgroundColor: '#02040a',
+                            },
+                            animation: 'fade',
+                        }}
+                    >
+                        <Stack.Screen name="index" />
+                        <Stack.Screen name="record" />
+                        <Stack.Screen name="mixer" />
+                        <Stack.Screen name="player" />
+                    </Stack>
+                </View>
+            </ToastProvider>
+        </SafeAreaProvider>
     );
 }
 

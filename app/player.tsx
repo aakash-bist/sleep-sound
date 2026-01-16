@@ -20,6 +20,7 @@ import { SleepTimer } from '../src/components/SleepTimer';
 import { VolumeSlider } from '../src/components/VolumeSlider';
 import { colors, fontSize, spacing, borderRadius } from '../src/constants/theme';
 import { getSoundSource, backgroundSounds } from '../src/constants/sounds';
+import { useToast } from '../src/components/Toast';
 
 const { width, height } = Dimensions.get('window');
 
@@ -105,6 +106,7 @@ export default function PlayerScreen() {
     const aurora3 = useRef(new Animated.Value(0)).current;
 
     const selectedSoundInfo = backgroundSounds.find(s => s.id === backgroundSound);
+    const { showError } = useToast();
 
     const {
         play,
@@ -121,6 +123,7 @@ export default function PlayerScreen() {
         backgroundVolume,
         loop: true,
         onPlaybackComplete: () => setIsPlaying(false),
+        onError: (title, message) => showError(title, message),
     });
 
     useEffect(() => {
@@ -233,7 +236,7 @@ export default function PlayerScreen() {
                         <Ionicons name="chevron-down" size={24} color="#fff" />
                     </TouchableOpacity>
 
-                    <Text style={styles.zenTitle}>Zen Mode</Text>
+                    <Text style={styles.zenTitle}>{selectedSoundInfo?.name || 'Your Recording'}</Text>
 
                     <TouchableOpacity onPress={() => setChildLock(!childLock)} style={[styles.roundBtn, childLock && styles.activeBtn]}>
                         <Ionicons name={childLock ? "lock-closed" : "lock-open-outline"} size={18} color="#fff" />
@@ -252,13 +255,6 @@ export default function PlayerScreen() {
                     </Animated.View>
 
                     <View style={styles.metaContainer}>
-                        <Text style={styles.mainTitle}>{selectedSoundInfo?.name || 'Your Recording'}</Text>
-                        <View style={styles.indicatorRow}>
-                            <View style={[styles.pulseDot, playbackState.isPlaying && styles.pulseDotActive]} />
-                            <Text style={styles.subtext}>
-                                {playbackState.isPlaying ? 'LOOPS SYNCED' : 'QUIET'}
-                            </Text>
-                        </View>
                     </View>
                 </View>
 

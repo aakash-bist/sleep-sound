@@ -6,7 +6,6 @@ import {
     ScrollView,
     TouchableOpacity,
     TextInput,
-    Alert,
     Modal,
     Dimensions,
 } from 'react-native';
@@ -19,6 +18,7 @@ import { useAppStore } from '../src/store/useAppStore';
 import { VolumeSlider } from '../src/components/VolumeSlider';
 import { SoundSelector } from '../src/components/SoundSelector';
 import { colors, fontSize, spacing, borderRadius } from '../src/constants/theme';
+import { useToast } from '../src/components/Toast';
 
 const { width } = Dimensions.get('window');
 
@@ -42,6 +42,7 @@ export default function MixerScreen() {
 
     const [saveModalVisible, setSaveModalVisible] = useState(false);
     const [presetName, setPresetName] = useState('');
+    const { showSuccess, showWarning } = useToast();
 
     const handlePlay = () => {
         router.push('/player');
@@ -49,16 +50,16 @@ export default function MixerScreen() {
 
     const handleSavePreset = () => {
         if (!presetName.trim()) {
-            Alert.alert('Incomplete', 'Please give your sound a name');
+            showWarning('Incomplete', 'Please give your sound a name');
             return;
         }
 
         savePreset(presetName.trim());
         setSaveModalVisible(false);
         setPresetName('');
-        Alert.alert('Mix Saved', 'Your unique sleep sound is ready.', [
-            { text: 'GO HOME', onPress: () => router.push('/') },
-        ]);
+        showSuccess('Mix Saved', 'Your unique sleep sound is ready!');
+        // Navigate home after a brief delay to let user see the toast
+        setTimeout(() => router.push('/'), 1500);
     };
 
     const canPlay = voiceUri || backgroundSound;

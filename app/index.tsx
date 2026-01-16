@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    Alert,
     Dimensions,
     Image,
+    Animated,
+    Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +17,8 @@ const LinearGradient = (ExpoLinearGradient as any).LinearGradient || (ExpoLinear
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../src/store/useAppStore';
 import { PresetCard } from '../src/components/PresetCard';
+import { ConfirmDialog } from '../src/components/ConfirmDialog';
+import { useToast } from '../src/components/Toast';
 import { colors, spacing } from '../src/constants/theme';
 
 const { width } = Dimensions.get('window');
@@ -28,6 +31,13 @@ export default function HomeScreen() {
     const router = useRouter();
     const { presets, deletePreset, loadPreset, isPlaying } = useAppStore();
 
+    // Delete confirmation dialog state
+    const [deleteDialog, setDeleteDialog] = useState<{ visible: boolean; id: string; name: string }>({
+        visible: false,
+        id: '',
+        name: '',
+    });
+
     const handleNewRecording = () => {
         router.push('/record');
     };
@@ -38,19 +48,52 @@ export default function HomeScreen() {
     };
 
     const handleDeletePreset = (id: string, name: string) => {
-        Alert.alert(
-            'Remove Preset',
-            `Delete "${name}" from your collection?`,
-            [
-                { text: 'KEEP', style: 'cancel' },
-                {
-                    text: 'DELETE',
-                    style: 'destructive',
-                    onPress: () => deletePreset(id),
-                },
-            ]
-        );
+        setDeleteDialog({ visible: true, id, name });
     };
+
+    const { showSuccess } = useToast();
+
+    const confirmDelete = () => {
+        const name = deleteDialog.name;
+        deletePreset(deleteDialog.id);
+        setDeleteDialog({ visible: false, id: '', name: '' });
+        showSuccess('Deleted', `"${name}" has been removed`);
+    };
+
+    const cancelDelete = () => {
+        setDeleteDialog({ visible: false, id: '', name: '' });
+    };
+
+    // Animated sound wave bars
+    const wave1 = useRef(new Animated.Value(0)).current;
+    const wave2 = useRef(new Animated.Value(0)).current;
+    const wave3 = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const animateWave = (value: Animated.Value, delay: number) => {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.delay(delay),
+                    Animated.timing(value, {
+                        toValue: 1,
+                        duration: 600,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(value, {
+                        toValue: 0,
+                        duration: 600,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: true,
+                    }),
+                ])
+            ).start();
+        };
+
+        animateWave(wave1, 0);
+        animateWave(wave2, 200);
+        animateWave(wave3, 400);
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -67,7 +110,7 @@ export default function HomeScreen() {
                     <View style={styles.header}>
                         <View style={styles.branding}>
                             <Image
-                                source={require('../assets/icon.png')}
+                                source={require('../assets/logo.png')}
                                 style={styles.brandLogo}
                                 resizeMode="contain"
                             />
@@ -76,25 +119,74 @@ export default function HomeScreen() {
                         <Text style={styles.tagline}>Create a peaceful space for your little one</Text>
                     </View>
 
-                    {/* Quick Start Card */}
+                    {/* Recording CTA Card - Redesigned */}
                     <TouchableOpacity
                         style={styles.ctaCard}
                         onPress={handleNewRecording}
-                        activeOpacity={0.9}
+                        activeOpacity={0.85}
                     >
                         <LinearGradient
-                            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+                            colors={['rgba(138, 43, 226, 0.15)', 'rgba(52, 152, 219, 0.1)']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
                             style={styles.ctaGradient}
                         >
-                            <View style={styles.ctaIconBox}>
-                                <Ionicons name="mic" size={28} color="#fff" />
+                            {/* Sound Wave Visual Left */}
+                            <View style={styles.waveGroup}>
+                                <Animated.View style={[
+                                    styles.ctaWave,
+                                    styles.ctaWave1,
+                                    { transform: [{ scaleY: wave1.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] }) }] }
+                                ]} />
+                                <Animated.View style={[
+                                    styles.ctaWave,
+                                    styles.ctaWave2,
+                                    { transform: [{ scaleY: wave2.interpolate({ inputRange: [0, 1], outputRange: [1, 1.3] }) }] }
+                                ]} />
+                                <Animated.View style={[
+                                    styles.ctaWave,
+                                    styles.ctaWave3,
+                                    { transform: [{ scaleY: wave3.interpolate({ inputRange: [0, 1], outputRange: [1, 1.2] }) }] }
+                                ]} />
                             </View>
-                            <View style={styles.ctaTextContent}>
-                                <Text style={styles.ctaTitle}>NEW RECORDING</Text>
-                                <Text style={styles.ctaSub}>Capture a lullaby or bedtime story</Text>
+
+                            {/* Center Mic Button */}
+                            <View style={styles.ctaMicContainer}>
+                                <View style={styles.ctaMicOuter}>
+                                    <View style={styles.ctaMicInner}>
+                                        <Ionicons name="mic" size={32} color="#fff" />
+                                    </View>
+                                </View>
+                                <Text style={styles.ctaLabel}>RECORD A LULLABY</Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+
+                            {/* Sound Wave Visual Right */}
+                            <View style={styles.waveGroup}>
+                                <Animated.View style={[
+                                    styles.ctaWave,
+                                    styles.ctaWave3,
+                                    { transform: [{ scaleY: wave3.interpolate({ inputRange: [0, 1], outputRange: [1, 1.2] }) }] }
+                                ]} />
+                                <Animated.View style={[
+                                    styles.ctaWave,
+                                    styles.ctaWave2,
+                                    { transform: [{ scaleY: wave2.interpolate({ inputRange: [0, 1], outputRange: [1, 1.3] }) }] }
+                                ]} />
+                                <Animated.View style={[
+                                    styles.ctaWave,
+                                    styles.ctaWave1,
+                                    { transform: [{ scaleY: wave1.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] }) }] }
+                                ]} />
+                            </View>
                         </LinearGradient>
+
+                        {/* Bottom Action */}
+                        <View style={styles.ctaBottom}>
+                            <Text style={styles.ctaTitle}>CREATE YOUR LULLABY</Text>
+                            <View style={styles.ctaArrow}>
+                                <Ionicons name="arrow-forward" size={16} color={colors.accent} />
+                            </View>
+                        </View>
                     </TouchableOpacity>
 
                     {/* Presets Grid */}
@@ -117,7 +209,7 @@ export default function HomeScreen() {
                             </View>
                         ) : (
                             <View style={styles.presetsList}>
-                                {presets.map((preset) => (
+                                {[...presets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map((preset) => (
                                     <PresetCard
                                         key={preset.id}
                                         preset={preset}
@@ -138,6 +230,18 @@ export default function HomeScreen() {
                     CRAFTED WITH ❤️ BY AAKASH BIST
                 </Text>
             </View>
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                visible={deleteDialog.visible}
+                title="Remove Preset"
+                message={`Delete "${deleteDialog.name}" from your collection?`}
+                confirmText="DELETE"
+                cancelText="KEEP"
+                onConfirm={confirmDelete}
+                onCancel={cancelDelete}
+                destructive
+            />
         </View>
     );
 }
@@ -188,13 +292,93 @@ const styles = StyleSheet.create({
         borderRadius: 32,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: 'rgba(255,255,255,0.15)',
         marginBottom: spacing.xxl,
+        backgroundColor: 'rgba(255,255,255,0.03)',
     },
     ctaGradient: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: spacing.xl,
+        justifyContent: 'center',
+        paddingVertical: spacing.xxl,
+        paddingHorizontal: spacing.lg,
+    },
+    waveGroup: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    ctaWave: {
+        width: 4,
+        backgroundColor: colors.accent,
+        borderRadius: 2,
+    },
+    ctaWave1: {
+        height: 20,
+        opacity: 0.4,
+    },
+    ctaWave2: {
+        height: 32,
+        opacity: 0.6,
+    },
+    ctaWave3: {
+        height: 44,
+        opacity: 0.8,
+    },
+    ctaMicContainer: {
+        alignItems: 'center',
+        marginHorizontal: spacing.xl,
+    },
+    ctaMicOuter: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(138, 43, 226, 0.2)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.sm,
+    },
+    ctaMicInner: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: colors.accent,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: colors.accent,
+        shadowOpacity: 0.5,
+        shadowRadius: 15,
+        elevation: 10,
+    },
+    ctaLabel: {
+        fontSize: 9,
+        fontWeight: '800',
+        color: 'rgba(255,255,255,0.5)',
+        letterSpacing: 2,
+    },
+    ctaBottom: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: spacing.md,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.06)',
+        gap: spacing.sm,
+    },
+    ctaTitle: {
+        fontSize: 11,
+        fontWeight: '900',
+        color: '#fff',
+        letterSpacing: 2,
+    },
+    ctaArrow: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     ctaIconBox: {
         width: 56,
@@ -207,13 +391,6 @@ const styles = StyleSheet.create({
     },
     ctaTextContent: {
         flex: 1,
-    },
-    ctaTitle: {
-        fontSize: 12,
-        fontWeight: '900',
-        color: '#fff',
-        letterSpacing: 2,
-        marginBottom: 4,
     },
     ctaSub: {
         fontSize: 11,
@@ -289,17 +466,20 @@ const styles = StyleSheet.create({
     },
     footerBranding: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 0,
         left: 0,
         right: 0,
         alignItems: 'center',
-        paddingVertical: spacing.md,
+        paddingVertical: spacing.xs,
+        paddingBottom: 10,
+        paddingTop: 10,
+        backgroundColor: '#02040a',
     },
     footerCredit: {
         fontSize: 8,
         fontWeight: '900',
         color: 'rgba(255,255,255,0.3)',
-        letterSpacing: 4,
+        letterSpacing: 2,
         textAlign: 'center',
     },
 });
