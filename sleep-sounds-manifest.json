@@ -1,0 +1,119 @@
+{
+    "version": 1,
+    "sounds": [
+        {
+            "id": "rain",
+            "name": "Gentle Rain",
+            "icon": "weather-rainy",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/rain_japqoc.mp3"
+        },
+        {
+            "id": "ocean",
+            "name": "Ocean Waves",
+            "icon": "waves",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/ocean_ciugbm.mp3"
+        },
+        {
+            "id": "sleep_tune",
+            "name": "Sleep Tune",
+            "icon": "moon-waning-crescent",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/sleep_tune_nur6n0.mp3"
+        },
+        {
+            "id": "music-box",
+            "name": "Music Box",
+            "icon": "music-box",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/music-box_tryolx.mp3"
+        },
+        {
+            "id": "kitten-snore",
+            "name": "Kitten Snore",
+            "icon": "cat",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/kitten-snore_rfgqy9.mp3"
+        },
+        {
+            "id": "piano",
+            "name": "Soft Piano",
+            "icon": "piano",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/piano_apl9hd.mp3"
+        },
+        {
+            "id": "flute",
+            "name": "Gentle Flute",
+            "icon": "flute",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/flute_qjahfi.mp3"
+        },
+        {
+            "id": "guitar",
+            "name": "Acoustic Guitar",
+            "icon": "guitar-acoustic",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/guitar_ry5hkk.mp3"
+        },
+        {
+            "id": "calm-guitar",
+            "name": "Calm Guitar",
+            "icon": "guitar-acoustic",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/calm-guitar_jzjore.mp3"
+        },
+        {
+            "id": "violin",
+            "name": "Soft Violin",
+            "icon": "violin",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/violin_houxox.mp3"
+        },
+        {
+            "id": "baby_sleep_new",
+            "name": "Baby Sleep",
+            "icon": "baby-face",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/v1768650866/baby_sleep_new_ajumh8.mp3"
+        },
+        {
+            "id": "krishna_flute",
+            "name": "Krishna Flute",
+            "icon": "om",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/krishna_flute_x08sng.mp3"
+        },
+        {
+            "id": "krishna_peaceful_flute",
+            "name": "Peaceful Krishna",
+            "icon": "om",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/krishna_peaceful_flute_ffat33.mp3"
+        },
+        {
+            "id": "sitar",
+            "name": "Sitar Melody",
+            "icon": "instrument-triangle",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/sitar_ifolev.mp3"
+        },
+        {
+            "id": "sitar_chanakya",
+            "name": "Sitar Chanakya",
+            "icon": "instrument-triangle",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/sitar_chanakya_srscf9.mp3"
+        },
+        {
+            "id": "har_har_mahadev",
+            "name": "Har Har Mahadev",
+            "icon": "trident",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/har_har_mahadev_v3mcl0.mp3"
+        },
+        {
+            "id": "rishabh_sharma",
+            "name": "Rishabh Sharma",
+            "icon": "instrument-triangle",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/rishabh_sharma_qdnwme.mp3"
+        },
+        {
+            "id": "touching",
+            "name": "Touching Tune",
+            "icon": "sparkles",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/v1768650892/touching_gschl8.mp3"
+        },
+        {
+            "id": "krisshh_flute",
+            "name": "Krisshh Flute",
+            "icon": "flute",
+            "url": "https://res.cloudinary.com/deisme7vs/video/upload/krisshh_flute_rtts74.mp3"
+        }
+    ]
+}

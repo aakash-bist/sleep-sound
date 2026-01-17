@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Preset } from '../types';
+import { Preset, BackgroundSound } from '../types';
+import { getCloudinarySounds } from '../services/cloudinarySounds';
 
 interface AppState {
     // Current session
@@ -12,6 +13,10 @@ interface AppState {
     isPlaying: boolean;
     sleepTimerMinutes: number | null;
     sleepTimerEndTime: number | null;
+
+    // Available sounds from Cloudinary
+    availableSounds: BackgroundSound[];
+    soundsLoading: boolean;
 
     // Saved presets
     presets: Preset[];
@@ -24,6 +29,7 @@ interface AppState {
     setIsPlaying: (playing: boolean) => void;
     setSleepTimer: (minutes: number | null) => void;
     clearSleepTimer: () => void;
+    fetchSounds: () => Promise<void>;
 
     // Preset actions
     savePreset: (name: string) => void;
@@ -45,6 +51,8 @@ export const useAppStore = create<AppState>()(
             isPlaying: false,
             sleepTimerMinutes: null,
             sleepTimerEndTime: null,
+            availableSounds: [],
+            soundsLoading: true,
             presets: [],
 
             // Session actions
@@ -70,6 +78,22 @@ export const useAppStore = create<AppState>()(
             },
 
             clearSleepTimer: () => set({ sleepTimerMinutes: null, sleepTimerEndTime: null }),
+
+            // Fetch sounds from Cloudinary
+            fetchSounds: async () => {
+                set({ soundsLoading: true });
+                try {
+                    const sounds = await getCloudinarySounds();
+                    if (sounds && sounds.length > 0) {
+                        set({ availableSounds: sounds, soundsLoading: false });
+                    } else {
+                        set({ soundsLoading: false });
+                    }
+                } catch (error) {
+                    console.error('Error fetching sounds:', error);
+                    set({ soundsLoading: false });
+                }
+            },
 
             // Preset actions
             savePreset: (name) => {

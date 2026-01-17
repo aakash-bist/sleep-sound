@@ -9,10 +9,20 @@
         },
         "preview": {
             "android": {
-                "buildType": "apk"
+                "buildType": "apk",
+                "gradleCommand": ":app:assembleRelease"
             }
         },
-        "production": {}
+        "preview-aab": {
+            "android": {
+                "buildType": "app-bundle"
+            }
+        },
+        "production": {
+            "android": {
+                "buildType": "app-bundle"
+            }
+        }
     },
     "submit": {
         "production": {}

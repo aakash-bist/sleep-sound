@@ -102,7 +102,7 @@ export default function MixerScreen() {
                                     label="VOICE PURITY"
                                     value={voiceVolume}
                                     onValueChange={setVoiceVolume}
-                                    icon="🎤"
+                                    icon="microphone"
                                 />
                             </View>
                         ) : (
@@ -125,7 +125,7 @@ export default function MixerScreen() {
                                     label="AMBIENT VIBE"
                                     value={backgroundVolume}
                                     onValueChange={setBackgroundVolume}
-                                    icon="🌊"
+                                    icon="waves"
                                 />
                             </View>
                         )}

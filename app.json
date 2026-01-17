@@ -13,7 +13,8 @@
       "backgroundColor": "#02040a"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aakashbist.sleepapp"
     },
     "android": {
       "package": "com.aakashbist.sleepapp",
@@ -23,9 +24,7 @@
       }
     },
     "plugins": [
-      "expo-router",
-      "expo-asset",
-      "expo-font"
+      "expo-router"
     ],
     "extra": {
       "router": {},

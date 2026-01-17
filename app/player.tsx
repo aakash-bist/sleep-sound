@@ -13,13 +13,12 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ExpoLinearGradient from 'expo-linear-gradient';
 const LinearGradient = (ExpoLinearGradient as any).LinearGradient || (ExpoLinearGradient as any).default || ExpoLinearGradient;
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppStore } from '../src/store/useAppStore';
 import { useAudioPlayer } from '../src/hooks/useAudioPlayer';
 import { SleepTimer } from '../src/components/SleepTimer';
 import { VolumeSlider } from '../src/components/VolumeSlider';
 import { colors, fontSize, spacing, borderRadius } from '../src/constants/theme';
-import { getSoundSource, backgroundSounds } from '../src/constants/sounds';
 import { useToast } from '../src/components/Toast';
 
 const { width, height } = Dimensions.get('window');
@@ -90,7 +89,11 @@ export default function PlayerScreen() {
         sleepTimerEndTime,
         setSleepTimer,
         setIsPlaying,
+        availableSounds,
     } = useAppStore();
+
+    const selectedSoundInfo = availableSounds.find(s => s.id === backgroundSound);
+    const soundSource = selectedSoundInfo?.source || null;
 
     const [showControls, setShowControls] = useState(true);
     const [childLock, setChildLock] = useState(false);
@@ -105,7 +108,6 @@ export default function PlayerScreen() {
     const aurora2 = useRef(new Animated.Value(0)).current;
     const aurora3 = useRef(new Animated.Value(0)).current;
 
-    const selectedSoundInfo = backgroundSounds.find(s => s.id === backgroundSound);
     const { showError } = useToast();
 
     const {
@@ -118,7 +120,7 @@ export default function PlayerScreen() {
         cleanup,
     } = useAudioPlayer({
         voiceUri: voiceUri || null,
-        backgroundSoundUri: getSoundSource(backgroundSound),
+        backgroundSoundUri: soundSource,
         voiceVolume,
         backgroundVolume,
         loop: true,
@@ -247,7 +249,11 @@ export default function PlayerScreen() {
                 <View style={styles.focusContainer}>
                     <Animated.View style={[styles.outerOrb, { transform: [{ scale: pulseAnim }] }]}>
                         <View style={styles.innerOrb}>
-                            <Text style={styles.focusEmoji}>{selectedSoundInfo?.icon || '🌙'}</Text>
+                            <MaterialCommunityIcons
+                                name={(selectedSoundInfo?.icon as keyof typeof MaterialCommunityIcons.glyphMap) || 'moon-waning-crescent'}
+                                size={80}
+                                color="#fff"
+                            />
                         </View>
 
                         {/* Progress Ring Simulation */}
@@ -272,9 +278,9 @@ export default function PlayerScreen() {
                             </TouchableOpacity>
 
                             <View style={styles.mixerCard}>
-                                <VolumeSlider label="VOICE DEPTH" value={voiceVolume} onValueChange={setVoiceVolume} icon="🎤" />
+                                <VolumeSlider label="VOICE DEPTH" value={voiceVolume} onValueChange={setVoiceVolume} icon="microphone" />
                                 <View style={styles.divider} />
-                                <VolumeSlider label="AMBIENT LEVEL" value={backgroundVolume} onValueChange={setBackgroundVolume} icon={selectedSoundInfo?.icon || '🌊'} />
+                                <VolumeSlider label="AMBIENT LEVEL" value={backgroundVolume} onValueChange={setBackgroundVolume} icon={selectedSoundInfo?.icon || 'waves'} />
                             </View>
 
                             <View style={styles.timerWrap}>

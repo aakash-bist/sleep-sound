@@ -1,8 +1,31 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Audio } from 'expo-av';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, fontSize, spacing, borderRadius } from '../constants/theme';
-import { backgroundSounds } from '../constants/sounds';
+import { useAppStore } from '../store/useAppStore';
+import { BackgroundSound } from '../types';
+
+// Map of icon names to MaterialCommunityIcons
+const ICON_MAP: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
+    'weather-rainy': 'weather-rainy',
+    'waves': 'waves',
+    'moon-waning-crescent': 'moon-waning-crescent',
+    'music-box': 'music-box',
+    'cat': 'cat',
+    'piano': 'piano',
+    'flute': 'music',
+    'guitar-acoustic': 'guitar-acoustic',
+    'violin': 'violin',
+    'baby-face': 'baby-face',
+    'om': 'om',
+    'instrument-triangle': 'music-note',
+    'trident': 'om',
+    'music-note': 'music-note',
+    'sparkles': 'star-four-points',
+    'volume-off': 'volume-off',
+    'microphone': 'microphone',
+};
 
 interface SoundSelectorProps {
     selectedSound: string | null;
@@ -10,7 +33,15 @@ interface SoundSelectorProps {
 }
 
 export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorProps) {
+    const { availableSounds, soundsLoading, fetchSounds } = useAppStore();
     const previewSoundRef = useRef<Audio.Sound | null>(null);
+
+    // Fetch sounds on mount
+    useEffect(() => {
+        if (availableSounds.length === 0) {
+            fetchSounds();
+        }
+    }, []);
 
     // Cleanup preview sound on unmount
     useEffect(() => {
@@ -31,7 +62,7 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
         }
     };
 
-    const playPreview = async (sound: typeof backgroundSounds[0]) => {
+    const playPreview = async (sound: BackgroundSound) => {
         try {
             // Stop any existing preview
             await stopPreview();
@@ -67,13 +98,26 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
             await stopPreview();
         } else {
             // Find and preview the sound
-            const sound = backgroundSounds.find(s => s.id === soundId);
+            const sound = availableSounds.find(s => s.id === soundId);
             if (sound) {
                 await playPreview(sound);
             }
         }
         onSelectSound(soundId);
     };
+
+    // Show loading state
+    if (soundsLoading && availableSounds.length === 0) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.title}>Background Sound</Text>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color={colors.accent} />
+                    <Text style={styles.loadingText}>Loading sounds...</Text>
+                </View>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -88,7 +132,11 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
                     style={[styles.soundCard, !selectedSound && styles.soundCardSelected]}
                     onPress={() => handleSoundPress(null)}
                 >
-                    <Text style={styles.soundIcon}>🔇</Text>
+                    <MaterialCommunityIcons
+                        name="volume-off"
+                        size={36}
+                        color={!selectedSound ? '#fff' : 'rgba(255,255,255,0.4)'}
+                    />
                     <Text
                         style={[
                             styles.soundName,
@@ -99,7 +147,7 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
                     </Text>
                 </TouchableOpacity>
 
-                {backgroundSounds.map((sound) => (
+                {availableSounds.map((sound) => (
                     <TouchableOpacity
                         key={sound.id}
                         style={[
@@ -108,7 +156,11 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
                         ]}
                         onPress={() => handleSoundPress(sound.id)}
                     >
-                        <Text style={styles.soundIcon}>{sound.icon}</Text>
+                        <MaterialCommunityIcons
+                            name={ICON_MAP[sound.icon] || 'music-note'}
+                            size={36}
+                            color={selectedSound === sound.id ? '#fff' : 'rgba(255,255,255,0.4)'}
+                        />
                         <Text
                             style={[
                                 styles.soundName,
@@ -200,5 +252,17 @@ const styles = StyleSheet.create({
     playingText: {
         fontSize: 12,
         color: '#fff',
+    },
+    loadingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: spacing.xl,
+        gap: spacing.sm,
+    },
+    loadingText: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.4)',
+        fontWeight: 'bold',
     },
 });

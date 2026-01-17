@@ -1,5 +1,6 @@
 import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, PanResponder } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, fontSize, spacing } from '../constants/theme';
 
 interface VolumeSliderProps {
@@ -74,7 +75,13 @@ export function VolumeSlider({ label, value, onValueChange, icon }: VolumeSlider
         <View style={styles.container}>
             <View style={styles.header}>
                 <View style={styles.labelContainer}>
-                    {icon && <Text style={styles.icon}>{icon}</Text>}
+                    {icon && (
+                        <MaterialCommunityIcons
+                            name={(icon as keyof typeof MaterialCommunityIcons.glyphMap) || 'music-note'}
+                            size={18}
+                            color="rgba(255,255,255,0.6)"
+                        />
+                    )}
                     <Text style={styles.label}>{label}</Text>
                 </View>
                 <Text style={styles.value}>{Math.round(value * 100)}%</Text>
