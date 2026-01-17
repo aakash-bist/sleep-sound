@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, PanResponder } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, fontSize, spacing } from '../constants/theme';
 
+// Fallback icon if provided icon is invalid
+const FALLBACK_ICON = 'music-note';
+
 interface VolumeSliderProps {
     label: string;
     value: number;
@@ -77,7 +80,7 @@ export function VolumeSlider({ label, value, onValueChange, icon }: VolumeSlider
                 <View style={styles.labelContainer}>
                     {icon && (
                         <MaterialCommunityIcons
-                            name={(icon as keyof typeof MaterialCommunityIcons.glyphMap) || 'music-note'}
+                            name={(icon || FALLBACK_ICON) as keyof typeof MaterialCommunityIcons.glyphMap}
                             size={18}
                             color="rgba(255,255,255,0.6)"
                         />

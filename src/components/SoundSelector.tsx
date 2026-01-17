@@ -1,31 +1,14 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Animated, Easing } from 'react-native';
 import { Audio } from 'expo-av';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, fontSize, spacing, borderRadius } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
 import { BackgroundSound } from '../types';
+import { clearSoundsCache } from '../services/cloudinarySounds';
 
-// Map of icon names to MaterialCommunityIcons
-const ICON_MAP: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
-    'weather-rainy': 'weather-rainy',
-    'waves': 'waves',
-    'moon-waning-crescent': 'moon-waning-crescent',
-    'music-box': 'music-box',
-    'cat': 'cat',
-    'piano': 'piano',
-    'flute': 'music',
-    'guitar-acoustic': 'guitar-acoustic',
-    'violin': 'violin',
-    'baby-face': 'baby-face',
-    'om': 'om',
-    'instrument-triangle': 'music-note',
-    'trident': 'om',
-    'music-note': 'music-note',
-    'sparkles': 'star-four-points',
-    'volume-off': 'volume-off',
-    'microphone': 'microphone',
-};
+// Fallback icon if manifest icon is invalid
+const FALLBACK_ICON = 'music-note';
 
 interface SoundSelectorProps {
     selectedSound: string | null;
@@ -35,6 +18,9 @@ interface SoundSelectorProps {
 export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorProps) {
     const { availableSounds, soundsLoading, fetchSounds } = useAppStore();
     const previewSoundRef = useRef<Audio.Sound | null>(null);
+    const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const spinAnim = useRef(new Animated.Value(0)).current;
 
     // Fetch sounds on mount
     useEffect(() => {
@@ -43,28 +29,56 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
         }
     }, []);
 
-    // Cleanup preview sound on unmount
+    // Cleanup preview sound on unmount - IMPORTANT for navigation
     useEffect(() => {
         return () => {
-            stopPreview();
+            // Force cleanup on unmount
+            if (previewSoundRef.current) {
+                previewSoundRef.current.stopAsync().catch(() => { });
+                previewSoundRef.current.unloadAsync().catch(() => { });
+                previewSoundRef.current = null;
+            }
         };
     }, []);
 
+    // Spin animation for refresh
+    useEffect(() => {
+        if (isRefreshing) {
+            Animated.loop(
+                Animated.timing(spinAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    easing: Easing.linear,
+                    useNativeDriver: true,
+                })
+            ).start();
+        } else {
+            spinAnim.setValue(0);
+        }
+    }, [isRefreshing]);
+
     const stopPreview = async () => {
+        // Clear any pending auto-stop timeout
+        if (previewTimeoutRef.current) {
+            clearTimeout(previewTimeoutRef.current);
+            previewTimeoutRef.current = null;
+        }
+
         if (previewSoundRef.current) {
+            const soundToStop = previewSoundRef.current;
+            previewSoundRef.current = null; // Clear ref immediately to prevent race conditions
             try {
-                await previewSoundRef.current.stopAsync();
-                await previewSoundRef.current.unloadAsync();
+                await soundToStop.stopAsync();
+                await soundToStop.unloadAsync();
             } catch (e) {
                 // Ignore cleanup errors
             }
-            previewSoundRef.current = null;
         }
     };
 
     const playPreview = async (sound: BackgroundSound) => {
         try {
-            // Stop any existing preview
+            // Stop any existing preview FIRST and wait for it
             await stopPreview();
 
             // Create and play preview
@@ -83,10 +97,10 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
 
             previewSoundRef.current = audioSound;
 
-            // Auto-stop after 5 seconds
-            setTimeout(() => {
+            // Auto-stop after 4 seconds
+            previewTimeoutRef.current = setTimeout(() => {
                 stopPreview();
-            }, 5000);
+            }, 4000);
         } catch (error) {
             console.error('Error playing preview:', error);
         }
@@ -106,6 +120,21 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
         onSelectSound(soundId);
     };
 
+    // Handle refresh - clears cache and fetches fresh from Cloudinary
+    const handleRefresh = async () => {
+        if (isRefreshing) return;
+        setIsRefreshing(true);
+        await stopPreview();
+        await clearSoundsCache();
+        await fetchSounds();
+        setIsRefreshing(false);
+    };
+
+    const spin = spinAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg'],
+    });
+
     // Show loading state
     if (soundsLoading && availableSounds.length === 0) {
         return (
@@ -121,8 +150,25 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Background Sound</Text>
-            <Text style={styles.subtitle}>Tap to preview</Text>
+            <View style={styles.headerRow}>
+                <View>
+                    <Text style={styles.title}>Background Sound</Text>
+                    <Text style={styles.subtitle}>Tap to preview</Text>
+                </View>
+                <TouchableOpacity
+                    onPress={handleRefresh}
+                    style={styles.refreshBtn}
+                    disabled={isRefreshing}
+                >
+                    <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                        <MaterialCommunityIcons
+                            name="refresh"
+                            size={20}
+                            color={isRefreshing ? colors.accent : 'rgba(255,255,255,0.4)'}
+                        />
+                    </Animated.View>
+                </TouchableOpacity>
+            </View>
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -157,7 +203,7 @@ export function SoundSelector({ selectedSound, onSelectSound }: SoundSelectorPro
                         onPress={() => handleSoundPress(sound.id)}
                     >
                         <MaterialCommunityIcons
-                            name={ICON_MAP[sound.icon] || 'music-note'}
+                            name={(sound.icon || FALLBACK_ICON) as keyof typeof MaterialCommunityIcons.glyphMap}
                             size={36}
                             color={selectedSound === sound.id ? '#fff' : 'rgba(255,255,255,0.4)'}
                         />
@@ -264,5 +310,20 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: 'rgba(255,255,255,0.4)',
         fontWeight: 'bold',
+    },
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: spacing.lg,
+        marginBottom: spacing.sm,
+    },
+    refreshBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255,255,255,0.06)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });

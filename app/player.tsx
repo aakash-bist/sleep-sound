@@ -21,6 +21,9 @@ import { VolumeSlider } from '../src/components/VolumeSlider';
 import { colors, fontSize, spacing, borderRadius } from '../src/constants/theme';
 import { useToast } from '../src/components/Toast';
 
+// Fallback icon if manifest icon is invalid
+const FALLBACK_ICON = 'moon-waning-crescent';
+
 const { width, height } = Dimensions.get('window');
 
 // Star component for the background
@@ -250,7 +253,7 @@ export default function PlayerScreen() {
                     <Animated.View style={[styles.outerOrb, { transform: [{ scale: pulseAnim }] }]}>
                         <View style={styles.innerOrb}>
                             <MaterialCommunityIcons
-                                name={(selectedSoundInfo?.icon as keyof typeof MaterialCommunityIcons.glyphMap) || 'moon-waning-crescent'}
+                                name={(selectedSoundInfo?.icon || FALLBACK_ICON) as keyof typeof MaterialCommunityIcons.glyphMap}
                                 size={80}
                                 color="#fff"
                             />

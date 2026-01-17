@@ -6,7 +6,7 @@ import { BackgroundSound } from '../types';
 
 // Cloudinary Configuration
 const CLOUDINARY_CLOUD_NAME = 'deisme7vs';
-const MANIFEST_URL = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/raw/upload/sleep-sounds-manifest_mdrrwz.json`;
+const MANIFEST_URL = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/raw/upload/sleep-sounds-manifest_kft145.json`;
 const CACHE_KEY = 'cloudinary_sounds_cache';
 const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
